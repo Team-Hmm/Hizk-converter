@@ -27,7 +27,7 @@ int main(void)
     httplib::Client cli(URL,80);
     
     char path[256] = "";
-    sprintf_s(path,"/v1beta/models/gemini-pro:generateContent?key=%s",API_KEY);
+    sprintf(path,"/v1beta/models/gemini-pro:generateContent?key=%s",API_KEY);
     httplib::Headers headers= {
         {"Content-Type", "application/json"},
         {"Authorization","Bearer 921347703943-9pg1ichsroraukhjbodflagfr1bjbq1p.apps.googleusercontent.com"}
