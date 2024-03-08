@@ -1,7 +1,6 @@
 これはAPIのテストです
 
-READMEと同じ階層にconfig.jsonをおいてください。  
-改行は含めいないでください。
+main.cppと同じ階層にconfig.hをおいてください。 
 ```json
 {"API_KEY": "YOUR_API_KEY"}
 ```
