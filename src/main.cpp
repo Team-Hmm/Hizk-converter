@@ -1,57 +1,76 @@
-#include "httplib.h"
-#include "config.h"
-#include "json.hpp"
 #include <iostream>
-#include <fstream>
-#include <string.h>
-using namespace std;
+#include <string>
+#include <curl/curl.h>
+#include "json.hpp"
+#include "config.h"
 
+using std::string;
+using std::cout;
+using std::cin;
+using std::cerr;
+using std::endl;
+using nlohmann::json;
 
+// Function prototypes
+size_t WriteCallback(void*, size_t, size_t, string*);
+string getCompletion(const string&, const string& model = "gpt-3.5-turbo");
 
-//#define URL "httpbin.org"
+// Main entry into the application
+int main() {
+    cout << "Enter a prompt: ";
+    string prompt;
+    getline(cin, prompt);
+    string response = getCompletion(prompt);
+    cout << response << endl;
 
-void CreateCorpora(){
-    httplib::Client cli(URL,80);
-    httplib::Headers headers= {
-        {"Content-Type", "application/json"},
-        {"Authorization","Bearer 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"}
-    };
-    auto res = cli.Post("/v1beta/corpora?key=AIzaSyA-DNHGjHkpmyOy1N8Gr6IEoCurnyV02p0",headers);
-    if (res && res->status == 200) {
-        std::cout << "status:" + res->status << std::endl;
-        std::cout << res->body << std::endl;
-    }else{
-        std::cout << res.error() << std::endl;
-        if(res)std::cout << "status:"<<res->status << std::endl;
-    }
+    return 0;
 }
 
-int main(void)
-{
-    CreateCorpora();
-    httplib::Client cli(URL,80);
+// Handle data received from the server
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* response) {
+    size_t totalSize = size * nmemb;
+    response->append((char*)contents, totalSize);
+    return totalSize;
+}
 
-    char path[256] = "";
-    sprintf(path,"/v1beta/models/gemini-pro:generateContent?key=%s",API_KEY);
-    httplib::Headers headers= {
-        {"Content-Type", "application/json"},
-        {"Authorization","Bearer 921347703943-9pg1ichsroraukhjbodflagfr1bjbq1p.apps.googleusercontent.com"}
-    };
-    string body = R"({
-        contents": [
-            {
-                "parts":[
-                    {"text": "Write a story about a magic backpack."}
-                ]
-            }
-        ]
-    })";
-    auto res = cli.Post(path,headers,body,"application/json");
-    if (res && res->status == 200) {
-        std::cout << "status:" + res->status << std::endl;
-        std::cout << res->body << std::endl;
-    }else{
-        std::cout << res.error() << std::endl;
-        if(res)std::cout << "status:"<<res->status << std::endl;
+// Construct a POST request to the chat model endpoint and process the response.
+string getCompletion(const string& prompt, const string& model) {
+    string baseUrl = "https://api.openai.com/v1/chat/completions";
+    string response;
+    CURL* curl = curl_easy_init();
+
+    if (curl) {
+        json requestData;
+        requestData["model"] = model;
+        requestData["messages"][0]["role"] = "user";
+        requestData["messages"][0]["content"] = prompt;
+        requestData["temperature"] = 0;
+
+        string requestDataStr = requestData.dump().c_str();
+        struct curl_slist* headers = NULL;
+
+
+
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        headers = curl_slist_append(headers, ("Authorization: Bearer " + API_KEY).c_str());
+        curl_easy_setopt(curl, CURLOPT_URL, baseUrl.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestDataStr.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, requestDataStr.length());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+        CURLcode res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK) {
+            cerr << "Curl request failed: " << curl_easy_strerror(res) << endl;
+        }
+
+        curl_easy_cleanup(curl);
+        curl_slist_free_all(headers);
     }
+    // return response;
+    json jresponse = json::parse(response);
+
+    std::cout << jresponse.dump() << std::endl;
+    return jresponse["choices"][0]["message"]["content"].get<string>();
 }
