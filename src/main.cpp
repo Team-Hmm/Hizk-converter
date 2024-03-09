@@ -6,8 +6,9 @@
 
 int main() {
     std::string pronpt;
-    std::cout << "Enter your prompt: ";
+    std::cout << "変換前: ";
     std::cin >> pronpt;
+    pronpt = "「"  + pronpt + "」という説明に当てはまるものを出力してください。ただし、答えとなる単語以外は一切含めないでください";
 
     httplib::SSLClient cli("api.openai.com", 443);
     // ヘッダーを作成
@@ -29,7 +30,7 @@ int main() {
 
     if (res && res->status == 200) {
         nlohmann::json resJson = nlohmann::json::parse(res->body);
-        std::cout << "response: " << resJson["choices"][0]["message"]["content"] << std::endl;
+        std::cout << "変換後: " << resJson["choices"][0]["message"]["content"] << std::endl;
     }
     else {
         std::cout << "Request failed!" << std::endl;
