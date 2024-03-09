@@ -1,76 +1,44 @@
 #include <iostream>
 #include <string>
-#include <curl/curl.h>
 #include "json.hpp"
+#include "httplib.h"
 #include "config.h"
 
-using std::string;
-using std::cout;
-using std::cin;
-using std::cerr;
-using std::endl;
-using nlohmann::json;
-
-// Function prototypes
-size_t WriteCallback(void*, size_t, size_t, string*);
-string getCompletion(const string&, const string& model = "gpt-3.5-turbo");
-
-// Main entry into the application
 int main() {
-    cout << "Enter a prompt: ";
-    string prompt;
-    getline(cin, prompt);
-    string response = getCompletion(prompt);
-    cout << response << endl;
+    std::string pronpt;
+    std::cout << "Enter your prompt: ";
+    std::cin >> pronpt;
+
+    httplib::SSLClient cli("api.openai.com", 443);
+    // ヘッダーを作成
+    httplib::Headers headers = {
+        {"Content-Type", "application/json"},
+        {"Authorization", "Bearer " + API_KEY}
+    };
+
+
+    nlohmann::json body;
+    body["model"] = "gpt-3.5-turbo";
+    body["messages"] = {{
+        {"role", "user"},
+        {"content", pronpt}
+    }};
+    body["temperature"] = 0.7;
+
+    auto res = cli.Post("/v1/chat/completions", headers, body.dump(), "application/json");
+
+    if (res && res->status == 200) {
+        nlohmann::json resJson = nlohmann::json::parse(res->body);
+        std::cout << "response: " << resJson["choices"][0]["message"]["content"] << std::endl;
+    }
+    else {
+        std::cout << "Request failed!" << std::endl;
+        nlohmann::json resJson = nlohmann::json::parse(res->body);
+        if (res) {
+            std::cout << "Status code: " << res->status << std::endl;
+            std::cout << "Body: " << res->body << std::endl;
+        }
+    }
 
     return 0;
-}
-
-// Handle data received from the server
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* response) {
-    size_t totalSize = size * nmemb;
-    response->append((char*)contents, totalSize);
-    return totalSize;
-}
-
-// Construct a POST request to the chat model endpoint and process the response.
-string getCompletion(const string& prompt, const string& model) {
-    string baseUrl = "https://api.openai.com/v1/chat/completions";
-    string response;
-    CURL* curl = curl_easy_init();
-
-    if (curl) {
-        json requestData;
-        requestData["model"] = model;
-        requestData["messages"][0]["role"] = "user";
-        requestData["messages"][0]["content"] = prompt;
-        requestData["temperature"] = 0;
-
-        string requestDataStr = requestData.dump().c_str();
-        struct curl_slist* headers = NULL;
-
-
-
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-        headers = curl_slist_append(headers, ("Authorization: Bearer " + API_KEY).c_str());
-        curl_easy_setopt(curl, CURLOPT_URL, baseUrl.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestDataStr.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, requestDataStr.length());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-        CURLcode res = curl_easy_perform(curl);
-
-        if (res != CURLE_OK) {
-            cerr << "Curl request failed: " << curl_easy_strerror(res) << endl;
-        }
-
-        curl_easy_cleanup(curl);
-        curl_slist_free_all(headers);
-    }
-    // return response;
-    json jresponse = json::parse(response);
-
-    std::cout << jresponse.dump() << std::endl;
-    return jresponse["choices"][0]["message"]["content"].get<string>();
 }
