@@ -18,7 +18,7 @@ int main() {
 
 
     nlohmann::json body;
-    body["model"] = "gpt-3.5-turbo";
+    body["model"] = "gpt-4";
     body["messages"] = {{
         {"role", "user"},
         {"content", pronpt}
