@@ -1,52 +1,45 @@
-#include "httplib.h"
-#include "json.hpp"
 #include <iostream>
-#include <string.h>
-using namespace std;
-#define URL "generativelanguage.googleapis.com"
-//#define URL "httpbin.org" 
-#define API_KEY "AIzaSyA-DNHGjHkpmyOy1N8Gr6IEoCurnyV02p0"
-void CreateCorpora(){
-    httplib::Client cli(URL,80);
-    httplib::Headers headers= {
+#include <string>
+#include "json.hpp"
+#include "httplib.h"
+#include "config.h"
+
+int main() {
+    std::string pronpt;
+    std::cout << "変換前: ";
+    std::cin >> pronpt;
+    pronpt = "「"  + pronpt + "」という説明に当てはまるものを出力してください。ただし、答えとなる単語以外は一切含めないでください";
+
+    httplib::SSLClient cli("api.openai.com", 443);
+    // ヘッダーを作成
+    httplib::Headers headers = {
         {"Content-Type", "application/json"},
-        {"Authorization","Bearer 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"}
+        {"Authorization", "Bearer " + API_KEY}
     };
-    auto res = cli.Post("/v1beta/corpora?key=AIzaSyA-DNHGjHkpmyOy1N8Gr6IEoCurnyV02p0",headers);
+
+
+    nlohmann::json body;
+    body["model"] = "gpt-4";
+    body["messages"] = {{
+        {"role", "user"},
+        {"content", pronpt}
+    }};
+    body["temperature"] = 0.7;
+
+    auto res = cli.Post("/v1/chat/completions", headers, body.dump(), "application/json");
+
     if (res && res->status == 200) {
-        std::cout << "status:" + res->status << std::endl;
-        std::cout << res->body << std::endl;
-    }else{
-        std::cout << res.error() << std::endl;
-        if(res)std::cout << "status:"<<res->status << std::endl;
+        nlohmann::json resJson = nlohmann::json::parse(res->body);
+        std::cout << "変換後: " << resJson["choices"][0]["message"]["content"] << std::endl;
     }
-}
-int main(void)
-{
-    CreateCorpora();
-    httplib::Client cli(URL,80);
-    
-    char path[256] = "";
-    sprintf_s(path,"/v1beta/models/gemini-pro:generateContent?key=%s",API_KEY);
-    httplib::Headers headers= {
-        {"Content-Type", "application/json"},
-        {"Authorization","Bearer 921347703943-9pg1ichsroraukhjbodflagfr1bjbq1p.apps.googleusercontent.com"}
-    };
-    string body = R"({
-        contents": [
-            {
-                "parts":[
-                    {"text": "Write a story about a magic backpack."}
-                ]
-            }
-        ]
-    })";
-    auto res = cli.Post(path,headers,body,"application/json");
-    if (res && res->status == 200) {
-        std::cout << "status:" + res->status << std::endl;
-        std::cout << res->body << std::endl;
-    }else{
-        std::cout << res.error() << std::endl;
-        if(res)std::cout << "status:"<<res->status << std::endl;
+    else {
+        std::cout << "Request failed!" << std::endl;
+        nlohmann::json resJson = nlohmann::json::parse(res->body);
+        if (res) {
+            std::cout << "Status code: " << res->status << std::endl;
+            std::cout << "Body: " << res->body << std::endl;
+        }
     }
+
+    return 0;
 }
