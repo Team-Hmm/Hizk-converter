@@ -4,11 +4,8 @@
 #include "httplib.h"
 #include "config.h"
 
-int main() {
-    std::string pronpt;
-    std::cout << "変換前: ";
-    std::cin >> pronpt;
-    pronpt = "「"  + pronpt + "」という説明に当てはまるものを出力してください。ただし、答えとなる単語以外は一切含めないでください";
+std::string convert_gpt(std::string &&str){
+    std::string pronpt = "あなたは辞書ですが、通常の辞書と異なり意味から見出し語を探す辞書です。意味から元の見出し語を推測して、元の見出し語のみを出力してください。「"  + str + "」の見出し語はなんですか?";
 
     httplib::SSLClient cli("api.openai.com", 443);
     // ヘッダーを作成
@@ -19,7 +16,7 @@ int main() {
 
 
     nlohmann::json body;
-    body["model"] = "gpt-4";
+    body["model"] = "gpt-4-0125-preview";
     body["messages"] = {{
         {"role", "user"},
         {"content", pronpt}
@@ -30,16 +27,20 @@ int main() {
 
     if (res && res->status == 200) {
         nlohmann::json resJson = nlohmann::json::parse(res->body);
-        std::cout << "変換後: " << resJson["choices"][0]["message"]["content"] << std::endl;
+        std::string result = resJson["choices"][0]["message"]["content"];
+        return result;
     }
     else {
-        std::cout << "Request failed!" << std::endl;
-        nlohmann::json resJson = nlohmann::json::parse(res->body);
-        if (res) {
-            std::cout << "Status code: " << res->status << std::endl;
-            std::cout << "Body: " << res->body << std::endl;
-        }
+        return "エラーが発生しました";
     }
+}
 
-    return 0;
+int main() {
+    std::string str;
+    std::cout << "変換前: ";
+    std::cin >> str;
+    std::string &&pronpt = std::forward<std::string&&>(str);
+    std::string &&result = convert_gpt(std::forward<std::string>(pronpt));
+
+    std::cout << "変換後: " << result << std::endl;
 }
