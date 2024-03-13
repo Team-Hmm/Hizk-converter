@@ -31,7 +31,12 @@ std::string convert_gpt(std::string &&str){
         return result;
     }
     else {
-        return "エラーが発生しました";
+        if(res){
+            return "エラーが発生しました エラーコード:" + std::to_string(res->status);
+        }
+        else{
+            return "エラーが発生しました";
+        }
     }
 }
 
