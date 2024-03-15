@@ -1,0 +1,10 @@
+﻿  test.cpp
+C:\Users\pochi\source\repos\test\test\test.cpp(26,86): warning C4267: '引数': 'size_t' から 'int' に変換しました。データが失われているかもしれません。
+C:\Users\pochi\source\repos\test\test\test.cpp(28,66): warning C4267: '引数': 'size_t' から 'int' に変換しました。データが失われているかもしれません。
+C:\Users\pochi\source\repos\test\test\test.cpp(38,92): warning C4267: '引数': 'size_t' から 'int' に変換しました。データが失われているかもしれません。
+C:\Users\pochi\source\repos\test\test\test.cpp(40,72): warning C4267: '引数': 'size_t' から 'int' に変換しました。データが失われているかもしれません。
+C:\Users\pochi\source\repos\test\test\test.cpp(86,34): warning C4267: '引数': 'size_t' から 'DWORD' に変換しました。データが失われているかもしれません。
+C:\Users\pochi\source\repos\test\test\test.cpp(112,37): warning C4267: '引数': 'size_t' から 'DWORD' に変換しました。データが失われているかもしれません。
+C:\Users\pochi\source\repos\test\test\test.cpp(112,19): warning C4267: '引数': 'size_t' から 'DWORD' に変換しました。データが失われているかもしれません。
+C:\Users\pochi\source\repos\test\test\test.cpp(192,21): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
+  test.vcxproj -> C:\Users\pochi\source\repos\test\x64\Debug\test.exe
